@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 
 export default function App() {
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState(1);
   const [converted, setConverted] = useState(0);
   const [currencies, setCurrencies] = useState("");
-  const [cur1, setCur1] = useState("");
-  const [cur2, setCur2] = useState("");
+  const [cur1, setCur1] = useState("USD");
+  const [cur2, setCur2] = useState("USD");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Capture supported currencies
   useEffect(function () {
@@ -28,46 +29,29 @@ export default function App() {
     }
 
     fetchCurrencies();
-  }, []);
+  }, []); // Capture only once
 
   // Capture conversion
   useEffect(
     function () {
-      const controller = new AbortController();
-
       async function fetchConversion() {
         try {
-          //setIsLoading(true)
-          //setError("")
+          setIsLoading(true);
           const res = await fetch(
-            `https://api.frankfurter.app/latest?amount=${amount}&from=${cur1}&to=${cur2}`,
-            { signal: controller.signal }
+            `https://api.frankfurter.app/latest?amount=${amount}&from=${cur1}&to=${cur2}`
           );
-
-          if (!res.ok) {
-            throw new Error(
-              `Something went wrong with fetching currency conversion from ${cur1} to ${cur2} .`
-            );
-          }
 
           const data = await res.json();
           setConverted(data.rates[cur2]);
-
-          // setError("");
+          setIsLoading(false);
         } catch (err) {
-          if (err.name !== "AbortError") {
-            console.log(err.message);
-            // setError(err.message);
-          }
+          console.log(err.message);
         }
       }
 
-      fetchConversion();
+      if (cur1 === cur2) return setConverted(amount);
 
-      // Cleanup
-      return function () {
-        controller.abort();
-      };
+      fetchConversion();
     },
     [amount, cur1, cur2]
   );
@@ -78,17 +62,40 @@ export default function App() {
         type="text"
         value={amount}
         onChange={(e) => setAmount(Number(e.target.value))}
+        disabled={isLoading}
       />
-      <CurrencySelect currencies={currencies} setCur={setCur1} />
-      <CurrencySelect currencies={currencies} setCur={setCur2} />
-      <p>{converted}</p>
+      <CurrencySelect
+        cur={cur1}
+        currencies={currencies}
+        setCur={setCur1}
+        isLoading={isLoading}
+      />
+      <CurrencySelect
+        cur={cur2}
+        currencies={currencies}
+        setCur={setCur2}
+        isLoading={isLoading}
+      />
+      <p>
+        {converted.toFixed(2)} {cur2}
+        <br />
+        <br />
+        Powered by:{" "}
+        <a href="https://api.frankfurter.app/" target="_blank" rel="noreferrer">
+          https://api.frankfurter.app
+        </a>
+      </p>
     </div>
   );
 }
 
-function CurrencySelect({ currencies, setCur }) {
+function CurrencySelect({ cur, currencies, setCur, isLoading }) {
   return (
-    <select onChange={(e) => setCur(e.target.value)}>
+    <select
+      value={cur}
+      onChange={(e) => setCur(e.target.value)}
+      disabled={isLoading}
+    >
       {Object.keys(currencies).map((key) => (
         <option value={key} key={key}>
           {key}
