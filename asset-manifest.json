@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/react-currency-converter/static/js/main.e2bc9952.js",
+    "index.html": "/react-currency-converter/index.html",
+    "main.e2bc9952.js.map": "/react-currency-converter/static/js/main.e2bc9952.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.e2bc9952.js"
+  ]
+}
