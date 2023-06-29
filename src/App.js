@@ -16,25 +16,27 @@ export default function App() {
         const res = await fetch("https://api.frankfurter.app/currencies");
 
         if (!res.ok) {
-          throw new Error("Something went wrong with fetching movies.");
+          throw new Error("Something went wrong with fetching currency list.");
         }
 
         const supportedCurrencies = await res.json();
         setCurrencies(supportedCurrencies);
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.log(err.message);
-        }
+        console.log(err.message);
       }
     }
 
     fetchCurrencies();
-  }, []); // Capture only once
+  }, []); // Capture only once at the beginning on mounting
 
   // Capture conversion
   useEffect(
     function () {
-      async function fetchConversion() {
+      if (amount === 0) return setConverted(0);
+      if (cur1 === cur2) return setConverted(amount);
+
+      // Allow time for user to input text amount
+      const timer = setTimeout(async function fetchConversion() {
         try {
           setIsLoading(true);
           const res = await fetch(
@@ -43,15 +45,14 @@ export default function App() {
 
           const data = await res.json();
           setConverted(data.rates[cur2]);
-          setIsLoading(false);
         } catch (err) {
           console.log(err.message);
+        } finally {
+          setIsLoading(false);
         }
-      }
+      }, 1000);
 
-      if (cur1 === cur2) return setConverted(amount);
-
-      fetchConversion();
+      return () => clearTimeout(timer);
     },
     [amount, cur1, cur2]
   );
@@ -77,7 +78,7 @@ export default function App() {
         isLoading={isLoading}
       />
       <p>
-        {converted.toFixed(2)} {cur2}
+        {converted.toLocaleString("en-US")} {cur2}
         <br />
         <br />
         Powered by:{" "}
